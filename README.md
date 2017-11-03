@@ -4,7 +4,7 @@ Current workflow:
 
 `cp -r skel <short_name>`  
 `cd <short_name>`  
-`mkdir official  
+`mkdir official`  
 copy any SITSTAT or lifecyle docs to official directory  
 edit main.cfg  
 `../bin/fetch_and_process_temperatures.py`  
