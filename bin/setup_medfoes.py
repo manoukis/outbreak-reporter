@@ -197,6 +197,18 @@ def Main(argv):
                                         start_year=START_YEAR,
                                         truncate_to_full_day=True)
 
+    start_year=START_YEAR
+    end_year=END_YEAR
+    datestr = '{}-'+'{:02d}-{:02d}'.format(Fss[0].month, Fss[0].day)
+    year_range = np.arange(start_year, end_year+1)
+    if year_range[-1] < current_year: # include current year
+        year_range = np.append(year_range, current_year)
+
+    for year in year_range:
+        print(year)
+
+    sys.exit(0) ##### TEMP EXIT ####
+
     #######################################
     ## setup or update medfoes runs
     # vars: @ TCC for making this a function
