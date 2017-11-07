@@ -10,11 +10,13 @@ def tempF2C(x): return (x-32.0)*5.0/9.0
 def tempC2F(x): return (x*9.0/5.0)+32.0
 
 
-def load_temperature_hdf5(temps_fn, local_time_offset, basedir, start_year=None, truncate_to_full_day=True):
+def load_temperature_hdf5(temps_fn, local_time_offset, basedir=None, start_year=None, truncate_to_full_day=False):
     ## Load temperature
     # temps_fn = "{}_AT_cleaned.h5".format(station_callsign)
     logging.info("Using saved temperatures file '{}'".format(temps_fn))
-    tempdf = pd.read_hdf(os.path.join(basedir, temps_fn), 'table')
+    if basedir is not None:
+        temps_fn = os.path.join(basedir, temps_fn)
+    tempdf = pd.read_hdf(temps_fn, 'table')
 
     tmp = local_time_offset.split(':')
     tmp = int(tmp[0])*3600+int(tmp[1])*60
@@ -26,7 +28,6 @@ def load_temperature_hdf5(temps_fn, local_time_offset, basedir, start_year=None,
         if x.hour != 23:
             x = x-pd.Timedelta(days=1)
             tmp = '{:04d}-{:02d}-{:02d}'.format(x.year, x.month, x.day)
-            print('TMP',tmp)
             tempdf = tempdf.loc[:tmp]
     if start_year is not None:
         tempdf = tempdf.loc['{}-01-01'.format(start_year):]
