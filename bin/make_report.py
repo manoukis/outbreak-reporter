@@ -113,6 +113,10 @@ def Main(argv):
     if not 'start_year' in args or not args.start_year:
         logging.error("start_year parameter is required")
         sys.exit(2)
+    # args which default to None
+    for k in ['SS_F1', 'SS_F2', 'SS_F3']:
+        if not k in args or not getattr(args, k):
+            setattr(args, k, None)
 
     # setup logger
     setup_logger(verbose_level=args.verbose-args.quiet)
@@ -185,7 +189,7 @@ def Main(argv):
         y = GEN_DD*(i+1)
         ax.axhline(y=y, c='k', ls=':', alpha=0.5, lw=1)
         ax.text(0, y, ' F{:d}'.format(i+1), transform=trans, ha='left', va='bottom')
-        if len(Fss)>i+1:
+        if len(Fss)>i+1 and not pd.isnull(Fss[i+1]):
             x = (Fss[i+1]-Fss[0]).days
             ax.plot([x,x], [0,y], color='c', label=lab)
             lab = ''
@@ -217,7 +221,7 @@ def Main(argv):
 
         ax.hist(fall[~np.isnan(fall)], label='previous years', normed=True)
 
-        if len(Fss) > Fnum:
+        if len(Fss) > Fnum and not pd.isnull(Fss[Fnum]):
             ax.axvline(x=(Fss[Fnum]-Fss[0]).days, color='c', label='official lifecyle projections')
         ax.set_xlabel('F{} [days]'.format(Fnum))
         if Fnum<3:
@@ -275,7 +279,7 @@ def Main(argv):
         current_pe95 = np.nan
 
     tab = pd.DataFrame(OrderedDict([
-            [('','official projections'), ["{:.0f}".format((Fss[x]-Fss[0]).days) for x in range(1,4)]+["-"]],
+            [('','official projections'), ["{:.0f}".format((Fss[x]-Fss[0]).days) if not pd.isnull(Fss[x]) else '-' for x in range(1,4)]+["-"]],
             [('',args.short_name), ["{:.0f}".format(x) if np.isfinite(x) else "-" for x in fcur]
                                   +["{:.1f}".format(current_pe95) if np.isfinite(current_pe95) else "-"]],
             [('historic','25\%'), ["{:.1f}".format(x.quantile(0.25)) for x in f]],
@@ -305,9 +309,9 @@ def Main(argv):
                 ('TempEndYear', "{:04d}".format(END_YEAR)),
                 ('StartDate', Fss[0].strftime("%Y-%m-%d")),
                 ('StartDOY', Fss[0].strftime("%m-%d")),
-                ('SSFA', Fss[1].strftime("%Y-%m-%d")),
-                ('SSFB', Fss[2].strftime("%Y-%m-%d")),
-                ('SSFC', Fss[3].strftime("%Y-%m-%d")),
+                ('SSFA', Fss[1].strftime("%Y-%m-%d") if not pd.isnull(Fss[1]) else '-'),
+                ('SSFB', Fss[2].strftime("%Y-%m-%d") if not pd.isnull(Fss[2]) else '-'),
+                ('SSFC', Fss[3].strftime("%Y-%m-%d") if not pd.isnull(Fss[3]) else '-'),
                 # ('SSFADays', str((Fss[1]-Fss[0]).days)),
                 # ('SSFBDays', str((Fss[2]-Fss[0]).days)),
                 # ('SSFCDays', str((Fss[3]-Fss[0]).days)),
@@ -358,9 +362,10 @@ def Main(argv):
     except KeyError:
         pass
 
-    y = (Fss[3]-Fss[0]).days
-    ax.axhline(y=y, color='r', label='official F3 value')
-    ax.text(1, y, '{:d}'.format(int(np.round(y))), transform=trans, ha='left', va='center')
+    if not pd.isnull(Fss[3]):
+        y = (Fss[3]-Fss[0]).days
+        ax.axhline(y=y, color='r', label='official F3 value')
+        ax.text(1, y, '{:d}'.format(int(np.round(y))), transform=trans, ha='left', va='center')
 
     ax.set_ylabel('days after start date')
     ax.set_xlabel('start date')
@@ -412,8 +417,8 @@ def Main(argv):
     for i in range(3):
         y = GEN_DD * (i + 1)
         ax.axhline(y=y, c='k', alpha=0.5, lw=.5)
-        if len(Fss) > i + 1:
-            x = (Fss[i + 1] - Fss[0]).days
+        if len(Fss) > i+1 and not pd.isnull(Fss[i+1]):
+            x = (Fss[i+1] - Fss[0]).days
             ax.plot([x, x], [0, y], color='c', label=lab)
             lab = ''
             ax.text(x, 0, '{:d}'.format(int(x)), transform=trans, ha='left', va='bottom')
