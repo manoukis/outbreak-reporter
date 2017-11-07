@@ -10,16 +10,19 @@ def tempF2C(x): return (x-32.0)*5.0/9.0
 def tempC2F(x): return (x*9.0/5.0)+32.0
 
 
+def offset_str_to_tz(local_time_offset):
+    """convert a string like "+02:00" to a timezone object"""
+    tmp = local_time_offset.split(':')
+    tmp = int(tmp[0])*3600+int(tmp[1])*60
+    return dateutil.tz.tzoffset(local_time_offset, tmp)
+
+
 def load_temperature_hdf5(temps_fn, local_time_offset, basedir, start_year=None, truncate_to_full_day=True):
     ## Load temperature
     # temps_fn = "{}_AT_cleaned.h5".format(station_callsign)
     logging.info("Using saved temperatures file '{}'".format(temps_fn))
     tempdf = pd.read_hdf(os.path.join(basedir, temps_fn), 'table')
-
-    tmp = local_time_offset.split(':')
-    tmp = int(tmp[0])*3600+int(tmp[1])*60
-    sitetz = dateutil.tz.tzoffset(local_time_offset, tmp)
-    tempdf.index = tempdf.index.tz_convert(sitetz)
+    tempdf.index = tempdf.index.tz_convert(offset_str_to_tz(local_time_offset))
 
     if truncate_to_full_day:
         x = tempdf.index[-1]
@@ -37,10 +40,7 @@ def load_temperature_hdf5(temps_fn, local_time_offset, basedir, start_year=None,
 def load_temperature_csv(fn, local_time_offset=None):
     t = pd.read_csv(fn, index_col=0)
     if local_time_offset is not None:
-        tmp = local_time_offset.split(':')
-        tmp = int(tmp[0])*3600+int(tmp[1])*60
-        sitetz = dateutil.tz.tzoffset(local_time_offset, tmp)
-        t.index = pd.to_datetime(t.index).tz_localize('UTC').tz_convert(sitetz)
+        t.index = pd.to_datetime(t.index).tz_localize('UTC').tz_convert(offset_str_to_tz(local_time_offset))
     return t
 
 

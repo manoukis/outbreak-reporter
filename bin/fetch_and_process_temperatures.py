@@ -16,7 +16,9 @@ import pandas as pd
 import ftplib
 import io
 import datetime
+import dateutil
 from collections import OrderedDict
+import temperature_functions
 
 plt.style.use('seaborn-paper')
 
@@ -122,6 +124,13 @@ def Main(argv):
                                     outlier_thresh=args.outlier_thresh,
                                     outlier_multipass=args.outlier_multipass,
                                 )
+
+    # save as a csv with proper timezone
+    outfn = "{}_AT_cleaned".format(args.station_callsign)
+    logging.info("Saving csv format to '{}'".format(outfn))
+    tempdf.index = tempdf.index.tz_convert(
+                    temperature_functions.offset_str_to_tz(args.local_time_offset))
+    tempdf.to_csv(os.path.join(args.basedir, outfn+'.csv'), columns=['AT'], index_label='datetime')
 
     ## end
     logging.info("Done: {:.2f} sec elapsed".format(time.time()-tic_total))

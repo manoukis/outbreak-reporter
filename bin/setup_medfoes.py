@@ -9,40 +9,9 @@ import logging
 import numpy as np
 import pandas as pd
 from distutils.util import strtobool
+from collections import OrderedDict
 
 import temperature_functions
-
-
-MFP_CFG_PAT = """
-Ni      33,100
-R       2
-S       0.05,0.15
-rred    .5,1
-Sai     true
-TEL     9.6,12.5,27.27,33.80
-TLP     5.0,10.8,94.50,186.78
-TPA     9.1,13.8,123.96,169.49
-TIM     7.9,9.9,58.20,105.71
-Me      0.0198,0.1211
-Ml      0.0068,0.0946
-Mp      0.0016,0.0465
-Ma      0.0245,0.1340
-tdm     true
-r       5,35
-rvar    3.57
-Dm      1
-TuSD    0.05
-Tmax    35
-nR      {NUM_RUNS_PER_SET}
-nT      20
-Mx      500000
-seed    1
-T       dummy_value_overridden_by_command_line_argument
-o       dummy_value_overridden_by_command_line_argument
-q       true
-pr      false
-plot    false
-"""
 
 
 DEFAULT_LOGGING_LEVEL = logging.INFO
@@ -190,29 +159,21 @@ def Main(argv):
         END_YEAR = args.end_year
 
     ## Load temperature data
-    tempdf = temperature_functions.load_temperature_hdf5(
-                                        temps_fn="{}_AT_cleaned.h5".format(args.station_callsign),
-                                        local_time_offset=args.local_time_offset,
-                                        basedir=args.basedir,
-                                        start_year=START_YEAR,
-                                        truncate_to_full_day=True)
-
-    start_year=START_YEAR
-    end_year=END_YEAR
-    datestr = '{}-'+'{:02d}-{:02d}'.format(Fss[0].month, Fss[0].day)
-    year_range = np.arange(start_year, end_year+1)
-    if year_range[-1] < current_year: # include current year
-        year_range = np.append(year_range, current_year)
-
-    for year in year_range:
-        print(year)
-
-    sys.exit(0) ##### TEMP EXIT ####
+#    tempdf = temperature_functions.load_temperature_hdf5(
+#                                        temps_fn="{}_AT_cleaned.h5".format(args.station_callsign),
+#                                        local_time_offset=args.local_time_offset,
+#                                        basedir=args.basedir,
+#                                        start_year=None, #START_YEAR,
+#                                        truncate_to_full_day=True)
+    tempfn = os.path.join(args.basedir,"{}_AT_cleaned.csv".format(args.station_callsign))
+    logging.info("Loading temperature file '{}'".format(tempfn))
+    tempdf = temperature_functions.load_temperature_csv(tempfn,
+                    local_time_offset=args.local_time_offset)
 
     #######################################
     ## setup or update medfoes runs
     # vars: @ TCC for making this a function
-    # tempdf
+    # tempfn
     local_time_offset = args.local_time_offset
     medfoes_dir = os.path.join(args.basedir,args.medfoes_dir)
     medfoes_runs_per_date = args.MFP_nR
@@ -227,40 +188,24 @@ def Main(argv):
     if year_range[-1] < current_year: # include current year
         year_range = np.append(year_range, current_year)
 
-    os.makedirs(os.path.join(medfoes_dir,'temps'), exist_ok=True)
-    out_fns = []
-    all_out_fns = []
-    logging.info("Checking MEDFOES temperature input files for changes")
-    for y in year_range:
-        t = tempdf.loc[datestr.format(y):datestr.format(y+medfoes_num_years_of_temp_data_per_set)]
-        out_fn = "temps_{:04d}-{:02d}-{:02d}.csv".format(t.index[0].year, t.index[0].month, t.index[0].day)
-        out_fullfn = os.path.join(medfoes_dir, 'temps', out_fn)
-        all_out_fns.append(out_fn)
-        # potentially skip if input temperature file is not changed
-        if not force_full_medfoes_rerun:
-            try:
-                tmp = temperature_functions.load_temperature_csv(out_fullfn, local_time_offset=local_time_offset)
-            except FileNotFoundError:
-                tmp = None
-            if( tmp is not None and
-                    t.shape == tmp.shape and
-                    all(np.isclose(t.values, tmp.values))
-                    and all(t.index == tmp.index) ):
-                logging.info("{} no change".format(out_fn))
-                continue
-            else:
-                logging.info("{} CHANGED".format(out_fn))
-        # output new temperature file
-        logging.info("Updating {}".format(out_fn))
-        out_fns.append(out_fn)
-        t.to_csv(out_fullfn, columns=['AT'])
+    ## Build a dict of run arguments
+    runs = OrderedDict()
+    mfpcfgfn = os.path.join(medfoes_dir, "mfp.cfg") # @TCC vary based on the main cfg file?
+    for year in year_range:
+        #print(year, datestr.format(year)+" 00:00:00",
+        #            tempdf.index.get_loc(datestr.format(year)+" 00:00:00"))
+        runs[year] = "-f {} -Tskip {} -o {}".format(
+                mfpcfgfn,
+                str(tempdf.index.get_loc(datestr.format(year)+" 00:00:00")),
+                os.path.join("runs", datestr.format(year)))
 
     ## Write Medfoes-p configuration mfp.cfg
     with open(os.path.join(medfoes_dir, "mfp.cfg"), 'w') as fh:
         for action in aparser._actions:
             if action.dest.startswith('MFP_'):
                 print(action.dest[4:], action.default, file=fh)  # could also output action.help
-        print('T', 'dummy_value_overridden_by_command_line_argument', file=fh)
+        print('T', tempfn, file=fh)
+        print('Tskip', '0000', file=fh)
         print('o', 'dummy_value_overridden_by_command_line_argument', file=fh)
         print('q', 'true', file=fh)
         print('pr', 'false', file=fh)
@@ -287,15 +232,12 @@ def Main(argv):
 #$-t 1-{NUM_RUNSETS:d}
 
 BASEDIR="$PWD"
-TFILES=({TFILES})
+RUNARGSLIST=({RUNARGSLIST})
 
-TFILE=${{TFILES[$((${{SGE_TASK_ID}}-1))]}}
-tmp="${{TFILE##*/temps/temps_}}"
-datestamp="${{tmp%.csv}}"
-OUTDIR="runs/$datestamp"
+RUNARGS=${{RUNARGSLIST[$((${{SGE_TASK_ID}}-1))]}}
+OUTDIR="${{RUNARGS##*-o }}"
 
 JAR="$BASEDIR/MedFoesP-0.6.2.jar"
-CFGFILE="$BASEDIR/mfp.cfg"
 JAVA='/home/travc/jdk/jdk1.8.0_131/bin/java'
 NICE_LVL=9
 
@@ -303,40 +245,23 @@ echo '#####' Running $SGE_TASK_ID out=$OUTDIR
 rm -rf "$OUTDIR" && \\
 mkdir -p "$OUTDIR" && \\
 nice -n $NICE_LVL \\
-$JAVA -jar "$JAR" -f "$CFGFILE" -nR {NUM_RUNS_PER_SET} -T "$TFILE" -o "$OUTDIR" && \\
+$JAVA -jar "$JAR" $RUNARGS && \\
 tar --remove-files -C "$OUTDIR" -cjf "$OUTDIR/Runs.tar.bz2" Runs
 """
 
     # sge run file for all years
     with open(os.path.join(medfoes_dir, "run_mfp.sge"),'w') as fh:
         print(sge_runfile_pat.format(
-            MEDFOES_DIR=medfoes_dir,
-            NUM_RUNSETS=len(out_fns),
-            NUM_RUNS_PER_SET=medfoes_runs_per_date,
-            TFILES='\n'.join(['"'+os.path.join("${BASEDIR}",'temps',x)+'"' for x in all_out_fns])),
+            NUM_RUNSETS=len(runs),
+            RUNARGSLIST='\n'.join(['"'+x+'"' for x in runs.values()])),
             file=fh)
     os.chmod(os.path.join(medfoes_dir, "run_mfp.sge"), 0o774)
-#    # sge run file for just doing updated
-#    if len(out_fns) > 0:
-#        with open(os.path.join(medfoes_dir, "run_mfp_update.sge"),'w') as fh:
-#            print(sge_runfile_pat.format(
-#                MEDFOES_DIR=medfoes_dir,
-#                NUM_RUNSETS=len(out_fns),
-#                NUM_RUNS_PER_SET=medfoes_runs_per_date,
-#                TFILES='\n'.join(['"'+os.path.join("${BASEDIR}",'temps',x)+'"' for x in out_fns])),
-#                file=fh)
-#        os.chmod(os.path.join(medfoes_dir, "run_mfp_update.sge"), 0o774)
-#    else:
-#        logging.info("No temperature files changed, so no medfoes sets to update")
-#        #os.unlink(os.path.join(medfoes_dir, "run_mfp_update.sge"))
 
     ## output current run file
     current_runfile_pat = """#!/bin/bash
 BASEDIR="$PWD"
-TFILE="{CURRENT_TFILE}"
-tmp="${{TFILE##*/temps/temps_}}"
-datestamp="${{tmp%.csv}}"
-OUTDIR="runs/$datestamp"
+RUNARGS="{RUNARGS}"
+OUTDIR="${{RUNARGS##*-o }}"
 
 JAR="$BASEDIR/MedFoesP-0.6.2.jar"
 CFGFILE="$BASEDIR/mfp.cfg"
@@ -347,16 +272,14 @@ echo '#####' Running $SGE_TASK_ID out=$OUTDIR
 rm -rf "$OUTDIR" && \\
 mkdir -p "$OUTDIR" && \\
 nice -n $NICE_LVL \\
-$JAVA -jar "$JAR" -f "$CFGFILE" -nR {NUM_RUNS_PER_SET} -T "$TFILE" -o "$OUTDIR" && \\
+$JAVA -jar "$JAR" $RUNARGS && \\
 tar --remove-files -C "$OUTDIR" -cjf "$OUTDIR/Runs.tar.bz2" Runs
 """
 
-    if len(out_fns) > 0:
+    if len(runs) > 0:
         with open(os.path.join(medfoes_dir, "run_mfp_current.sh"), 'w') as fh:
             print(current_runfile_pat.format(
-                MEDFOES_DIR=medfoes_dir,
-                NUM_RUNS_PER_SET=medfoes_runs_per_date,
-                CURRENT_TFILE=os.path.join("${BASEDIR}", 'temps', out_fns[-1])),
+                RUNARGS=next(reversed(runs.values()))), # last value
                 file=fh)
         os.chmod(os.path.join(medfoes_dir, "run_mfp_current.sh"), 0o774)
 
