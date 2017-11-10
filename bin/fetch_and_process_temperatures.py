@@ -101,7 +101,7 @@ def Main(argv):
     logging.info('Using passed arguments: '+str(argv))
     logging.info('args: '+str(args))
 
-    # # @TCC TEMP -- print out all the options/arguments
+    # # @TCC TMP -- print out all the options/arguments
     # for k,v in vars(args).items():
     #     print(k,":",v, file=sys.stderr)
 
@@ -239,6 +239,13 @@ def fetch_and_process_temperatures(station_callsign,
         ax.set_xlabel("datetime")
         ax.set_ylabel("air temp ['C]")
         plt.savefig(os.path.join(basedir, '{}_AT_orig.png'.format(station_callsign)))
+
+#    # @TCC TMP -- Save before cleaning
+#    t.to_hdf(os.path.join(basedir, '{}_AT_orig.h5'.format(station_callsign)), 
+#              'table', mode='w',
+#              data_colums=True, complevel=5, complib='bzip2',
+#              dropna=False)
+
 
     ### Cleaning temperatures ###
 
