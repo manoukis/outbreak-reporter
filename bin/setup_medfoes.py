@@ -178,12 +178,9 @@ def Main(argv):
     for k,v in vars(args).items():
         print(k,":",v, file=sys.stderr)
 
-    Fss = [pd.to_datetime(args.SS_start),
-           pd.to_datetime(args.SS_F1),
-           pd.to_datetime(args.SS_F2),
-           pd.to_datetime(args.SS_F3)]
+    Fss = pd.to_datetime(args.SS_start)
 
-    current_year = Fss[0].year
+    current_year = Fss.year
     START_YEAR = args.start_year
     END_YEAR = current_year-1
     if 'end_year' in args and args.end_year:
@@ -204,13 +201,13 @@ def Main(argv):
     local_time_offset = args.local_time_offset
     medfoes_dir = os.path.join(args.basedir,args.medfoes_dir)
     medfoes_runs_per_date = args.MFP_nR
-    start_date=Fss[0]
+    start_date=Fss
     start_year=START_YEAR
     end_year=END_YEAR
     medfoes_num_years_of_temp_data_per_set=args.medfoes_num_years_of_temp_data_per_set
     force_full_medfoes_rerun=args.force
 
-    datestr = '{}-'+'{:02d}-{:02d}'.format(Fss[0].month, Fss[0].day)
+    datestr = '{}-'+'{:02d}-{:02d}'.format(Fss.month, Fss.day)
     year_range = np.arange(start_year, end_year+1)
     if year_range[-1] < current_year: # include current year
         year_range = np.append(year_range, current_year)
