@@ -71,8 +71,8 @@ def Main(argv):
                          help="Download/fetch temperature data instead of just updating")
     aparser.add_argument('-P', '--make-temperature-plots', type=strtobool, default=False,
                          help="Generate plots when fetching and cleaning temperatures")
-    aparser.add_argument("--station-callsign", help="Callsign of the weather station to use")
-    aparser.add_argument("--start-year", type=int, help="First year to use historic temperature data for")
+    aparser.add_argument('-s', "--station-callsign", help="Callsign of the weather station to use")
+    #aparser.add_argument("--start-year", type=int, help="First year to use historic temperature data for")
     aparser.add_argument("--potentially-problematic-gap-size", type=pd.Timedelta,
                          help="Time gaps in temperature data longer than this are noted and filled via day-over-day interpolation")
     aparser.add_argument("--outlier_rolling_sigma_window", type=int, help="0 to just use median instead of median/sigma")
@@ -93,8 +93,8 @@ def Main(argv):
     if not 'station_callsign' in args or not args.station_callsign:
         logging.error("station_callsign parameter is required: 4 letter callsign for the weather station to use")
         sys.exit(2)
-    if not 'start_year' in args or not args.start_year:
-        args.start_year = None
+    #if not 'start_year' in args or not args.start_year:
+    #    args.start_year = None
 
     # setup logger
     setup_logger(verbose_level=args.verbose-args.quiet)
@@ -111,7 +111,7 @@ def Main(argv):
     ####
     tempdf = fetch_and_process_temperatures(
                                     station_callsign=args.station_callsign,
-                                    start_year=args.start_year,
+                                    #start_year=args.start_year,
                                     basedir=args.basedir,
                                     datadir=os.path.join(args.basedir, args.temperature_data_dir),
                                     make_temperature_plots=args.make_temperature_plots,
@@ -130,7 +130,7 @@ def Main(argv):
 
 
 def fetch_and_process_temperatures(station_callsign,
-                                   start_year,
+                                   #start_year,
                                    basedir,
                                    datadir,
                                    make_temperature_plots,
