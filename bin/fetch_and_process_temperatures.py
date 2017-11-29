@@ -154,17 +154,18 @@ def fetch_and_process_temperatures(station_callsign,
 
     # load the last fetch timestamp
     last_fetch_time = None
+    last_fetch_fn = os.path.join(datadir, "last_fetch_time_{}.txt".format(station_callsign))
     if not force_download_temps:
         try:
-            with open(os.path.join(datadir, "last_fetch_time.txt"), 'r') as fh:
+            with open(last_fetch_fn, 'r') as fh:
                 last_fetch_time = fh.readline().strip()
                 last_fetch_time = time.strptime(last_fetch_time, "%Y-%m-%dT%H:%M:%S%z")
         except FileNotFoundError:
-            logging.info("No last_fetch_time.txt file found")
+            logging.info("No '{}' file found".format(last_fetch_fn))
             last_fetch_time = None
             pass
         except ValueError as err:
-            logging.error("Did not understand last_fetch_time.txt: "+str(err))
+            logging.error("Did not understand '{}': {}".format(last_fetch_fn, str(err)))
             last_fetch_time = None
 
     isd_files = []
@@ -201,7 +202,7 @@ def fetch_and_process_temperatures(station_callsign,
                     os.remove(os.path.join(datadir, fn))
 
     # save the timestamp to a file
-    with open(os.path.join(datadir, "last_fetch_time.txt"), 'w') as fh:
+    with open(last_fetch_fn, 'w') as fh:
         print(time.strftime("%Y-%m-%dT%H:%M:%S%z"), file=fh)
 
     ## Load the isd-lite data from files
