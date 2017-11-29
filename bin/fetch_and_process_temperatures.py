@@ -71,6 +71,7 @@ def Main(argv):
                          help="Download/fetch temperature data instead of just updating")
     aparser.add_argument('-P', '--make-temperature-plots', type=strtobool, default=False,
                          help="Generate plots when fetching and cleaning temperatures")
+    aparser.add_argument("--station-callsign", help="Callsign of the weather station to use")
     aparser.add_argument("--start-year", type=int, help="First year to use historic temperature data for")
     aparser.add_argument("--potentially-problematic-gap-size", type=pd.Timedelta,
                          help="Time gaps in temperature data longer than this are noted and filled via day-over-day interpolation")
