@@ -278,23 +278,24 @@ def Main(argv):
     except KeyError:
         current_pe95 = np.nan
 
+    na_str = r'\textit{NA}'
     tab = pd.DataFrame(OrderedDict([
-            [('','official projections'), ["{:.0f}".format((Fss[x]-Fss[0]).days) if not pd.isnull(Fss[x]) else '-' for x in range(1,4)]+["-"]],
-            [('',args.short_name), ["{:.0f}".format(x) if np.isfinite(x) else "-" for x in fcur]
-                                  +["{:.1f}".format(current_pe95) if np.isfinite(current_pe95) else "-"]],
+            [('','official projections'), ["{:.0f}".format((Fss[x]-Fss[0]).days) if not pd.isnull(Fss[x]) else na_str for x in range(1,4)]+[na_str]],
+            [('',args.short_name), ["{:.0f}".format(x) if np.isfinite(x) else na_str for x in fcur]
+                                  +["{:.1f}".format(current_pe95) if np.isfinite(current_pe95) else na_str]],
             [('historic','25\%'), ["{:.1f}".format(x.quantile(0.25)) for x in f]],
-            [('historic','50\%'), ["{:.1f}".format(x.quantile(0.5)) for x in f]],
+            [('historic','(median) 50\%'), [r"\textbf{"+"{:.1f}".format(x.quantile(0.5))+r"}" for x in f]],
             [('historic','75\%'), ["{:.1f}".format(x.quantile(0.75)) for x in f]],
             [('historic','mean'), ["{:.1f}".format(x.mean()) for x in f]],
             [('historic','std'), ["{:.1f}".format(x.std()) for x in f]],
-            [('historic','years (N)'), ["{:d}".format(int(x.count())) for x in f]],
+            [('historic','(num. years) N'), ["{:d}".format(int(x.count())) for x in f]],
             ]), index=[r'\makecell{DD F1 \\ days}',
                        r'\makecell{DD F2 \\ days}',
                        r'\makecell{DD F3 \\ days}',
                        r'\makecell{ABS \\ 95\% erad}'] ).T
     tab.index = pd.MultiIndex.from_tuples(tab.index)
     #pd.set_option('precision', 1)
-    tab.to_latex(os.path.join(BASEDIR, "summary_table.texi"), na_rep='-',
+    tab.to_latex(os.path.join(BASEDIR, "summary_table.texi"), na_rep=na_str,
                  bold_rows=False, multirow=True, column_format='|lr|rrrr|', escape=False)
 
 
@@ -305,13 +306,14 @@ def Main(argv):
                 ('OutbreakLocation', args.location),
                 ('StationDescription', args.station_description),
                 ('Station', args.station_callsign),
+                ('TempStartDate', "{:04d}-{:02d}-{:02d}".format(START_YEAR, Fss[0].month, Fss[0].day)),
                 ('TempStartYear', "{:04d}".format(START_YEAR)),
                 ('TempEndYear', "{:04d}".format(END_YEAR)),
                 ('StartDate', Fss[0].strftime("%Y-%m-%d")),
                 ('StartDOY', Fss[0].strftime("%m-%d")),
-                ('SSFA', Fss[1].strftime("%Y-%m-%d") if not pd.isnull(Fss[1]) else '-'),
-                ('SSFB', Fss[2].strftime("%Y-%m-%d") if not pd.isnull(Fss[2]) else '-'),
-                ('SSFC', Fss[3].strftime("%Y-%m-%d") if not pd.isnull(Fss[3]) else '-'),
+                ('SSFA', Fss[1].strftime("%Y-%m-%d") if not pd.isnull(Fss[1]) else na_str),
+                ('SSFB', Fss[2].strftime("%Y-%m-%d") if not pd.isnull(Fss[2]) else na_str),
+                ('SSFC', Fss[3].strftime("%Y-%m-%d") if not pd.isnull(Fss[3]) else na_str),
                 # ('SSFADays', str((Fss[1]-Fss[0]).days)),
                 # ('SSFBDays', str((Fss[2]-Fss[0]).days)),
                 # ('SSFCDays', str((Fss[3]-Fss[0]).days)),
@@ -325,7 +327,6 @@ def Main(argv):
                                              glob.glob(os.path.join(MEDFOES_DIR,'MedFoesP*.jar'))[0]).group(1)),
                 ('MFPnR', args.MFP_nR),
         ):
-
             print(r"\newcommand{\Var"+name+r"}{"+val+r"\xspace}", file=fh)
 
 
