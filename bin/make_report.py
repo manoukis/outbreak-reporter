@@ -172,8 +172,11 @@ def Main(argv):
 
     y = current_year
     t = dd.loc[datestr.format(y):pd.to_datetime(datestr.format(y)) + pd.Timedelta(days=maxdays)]
-    x = (t.index - t.index[0]).days
-    ax.plot(x, t['DD'].cumsum(), '-', c='r', lw=2, label=args.short_name)
+    if t.shape[0] == 0:
+        logging.warning("NO DATA FOR CURRENT YEAR DD PROJECTION")
+    else:
+        x = (t.index - t.index[0]).days
+        ax.plot(x, t['DD'].cumsum(), '-', c='r', lw=2, label=args.short_name)
 
     lab = 'previous years'
     for y in year_range:
@@ -270,7 +273,11 @@ def Main(argv):
                      index=pd.to_datetime([datestr.format(y) for y in year_range]))
         x.dropna(inplace=True)
         f.append(x)
-        fcur.append(dd.loc[datestr.format(current_year)]['F{:d}'.format(Fnum)])
+        try:
+            fcur.append(dd.loc[datestr.format(current_year)]['F{:d}'.format(Fnum)])
+        except KeyError:
+            logging.warning("NO DD DATA FOR CURRENT YEAR")
+            fcur.append(np.nan)
     # Add medfoes 95% exradication result too
     f.append(pe.loc[datestr.format(START_YEAR):datestr.format(END_YEAR)][0.95]/24.0)
     try:
@@ -348,7 +355,10 @@ def Main(argv):
     ax.axhline(y=y, ls='--', color='C0', label='median degree-day F3')
     ax.text(0, y, '{:d}'.format(int(np.round(y))), transform=trans, ha='left', va='bottom')
     cdate = datestr.format(current_year)
-    ax.plot(dd.loc[cdate].name, dd.loc[cdate]['F3'], ls='none', marker='o', mfc='C0', mec='C0', mew=1)
+    try:
+        ax.plot(dd.loc[cdate].name, dd.loc[cdate]['F3'], ls='none', marker='o', mfc='C0', mec='C0', mew=1)
+    except KeyError:
+        logging.warning("NO DD DATA FOR CURRENT YEAR")
 
     tmp = sorted([datestr.format(x) for x in year_range])
     hist_pe = pe[tmp[0]:tmp[-1]]
