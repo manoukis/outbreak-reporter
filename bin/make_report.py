@@ -285,7 +285,7 @@ def Main(argv):
     except KeyError:
         current_pe95 = np.nan
 
-    na_str = r'\textit{NA}'
+    na_str = r'\textcolor{gray}{\textit{NA}}'
     tab = pd.DataFrame(OrderedDict([
             [('','official projections'), ["{:.0f}".format((Fss[x]-Fss[0]).days) if not pd.isnull(Fss[x]) else na_str for x in range(1,4)]+[na_str]],
             [('',args.short_name), ["{:.0f}".format(x) if np.isfinite(x) else na_str for x in fcur]
