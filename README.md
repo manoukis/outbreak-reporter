@@ -15,3 +15,12 @@ wait for medfoes runs to complete
 `cd ..`  
 `../bin/make_report.py`  
 report.pdf is the final output  
+
+
+To update...
+start from:
+`../bin/fetch_and_process_temperatures.py`  
+if only current year needs update, can run
+run_mfp_current.sh instead of do_mfp_runs_SGE.sh
+
+

@@ -152,7 +152,7 @@ def Main(argv):
 
     ## generate DD figures ##
     # group hourly data by day so we can get min and max daily values
-    grp = tempdf.groupby(pd.TimeGrouper('D'))
+    grp = tempdf.groupby(pd.Grouper(freq='D'))
     # actually call the function which computes the degree day generation values
     dd = temperature_functions.compute_BMDD_Fs(grp.min(),
                                                grp.max(),

@@ -95,7 +95,7 @@ def compute_BMDD_Fs(tmin, tmax, base_temp, dd_gen):
         tmp[tmp>=len(tmp)] = np.nan
         #dd[label+'_idx'] = tmp
         # convert those indexes into end times
-        e = pd.Series(index=dd.index, dtype='datetime64[ns]')
+        e = pd.Series(index=dd.index)#, dtype='datetime64[ns]')
         e[~np.isnan(tmp)] = dd.index[tmp[~np.isnan(tmp)].astype(int)]
         dd[label+'_end'] = e
         # and duration...

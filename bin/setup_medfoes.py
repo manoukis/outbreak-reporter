@@ -281,7 +281,7 @@ OUTDIR="runs/$datestamp"
 
 JAR="$BASEDIR/MedFoesP-0.6.2.jar"
 CFGFILE="$BASEDIR/mfp.cfg"
-JAVA='/home/travc/jdk/jdk1.8.0_131/bin/java'
+JAVA='/home/travc/jdk/jdk1.8.0_171/bin/java'
 NICE_LVL=9
 
 echo '#####' Running $SGE_TASK_ID out=$OUTDIR
