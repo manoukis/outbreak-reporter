@@ -262,7 +262,7 @@ def Main(argv):
 #$-o sge_$JOB_ID.out
 #$-e sge_$JOB_ID.err
 #$-q all.q
-#$-pe orte 15
+#$-pe smp 15
 #$-cwd
 #$-V
 #$-m n
