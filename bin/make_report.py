@@ -175,13 +175,13 @@ def Main(argv):
     if t.shape[0] == 0:
         logging.warning("NO DATA FOR CURRENT YEAR DD PROJECTION")
     else:
-        x = (t.index - t.index[0]).days
+        x = ((t.index - t.index[0]).days).values
         ax.plot(x, t['DD'].cumsum(), '-', c='r', lw=2, label=args.short_name)
 
     lab = 'previous years'
     for y in year_range:
         t = dd.loc[datestr.format(y):pd.to_datetime(datestr.format(y))+pd.Timedelta(days=maxdays)]
-        x = (t.index-t.index[0]).days
+        x = ((t.index-t.index[0]).days).values
         ax.plot(x, t['DD'].cumsum(), '-', c='k', alpha=0.25, label=lab, zorder=1)
         lab = ''
 
@@ -418,9 +418,9 @@ def Main(argv):
             maxdays = tmp
 
         if year == current_year:
-            ax.plot(y / 24.0, y.index, '-', c='r', lw=1.5, label=args.short_name)
+            ax.plot(y / 24.0, y.index.values, '-', c='r', lw=1.5, label=args.short_name)
         else:
-            ax.plot(y / 24.0, y.index, '-', c='k', alpha=0.25, label=lab)
+            ax.plot(y / 24.0, y.index.values, '-', c='k', alpha=0.25, label=lab)
             lab = ''
 
     trans = mpl.transforms.blended_transform_factory(ax.transData, ax.transAxes)

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 import os
 import logging
 import numpy as np
@@ -81,7 +82,6 @@ def compute_BMDD_Fs(tmin, tmax, base_temp, dd_gen):
     dd = pd.concat([tmin,tmax], axis=1)
     dd.columns = ['tmin', 'tmax']
     dd['DD'] = dd.apply(lambda x: _compute_daily_BM_DD(x[0], x[1], (x[0]+x[1])/2.0, base_temp), axis=1)
-
     # compute the degree-days for each day in the temperature input (from a daily groupby)
 #     grp = t.groupby(pd.TimeGrouper('D'))
 #     dd = grp.agg(lambda x: _compute_daily_BM_DD(np.min(x), np.max(x), None, base_temp))
@@ -96,10 +96,17 @@ def compute_BMDD_Fs(tmin, tmax, base_temp, dd_gen):
         #dd[label+'_idx'] = tmp
         # convert those indexes into end times
         e = pd.Series(index=dd.index)#, dtype='datetime64[ns]')
-        e[~np.isnan(tmp)] = dd.index[tmp[~np.isnan(tmp)].astype(int)]
+
+        #e[~np.isnan(tmp)] = dd.index[tmp[~np.isnan(tmp)].astype(int)] # @TCC previous code
+        e.loc[~np.isnan(tmp)] = dd.index[tmp[~np.isnan(tmp)].astype(int)]
+        e.loc[np.isnan(tmp)] = np.nan
         dd[label+'_end'] = e
         # and duration...
-        dd[label] = (e-dd.index+pd.Timedelta(days=1)).apply(lambda x: np.nan if pd.isnull(x) else x.days)
+        #dd[label] = (e-dd.index+pd.Timedelta(days=1)).apply(lambda x: np.nan if pd.isnull(x) else x.days) # @TCC previous code
+        dd[label] = (pd.to_datetime(e)-dd.index+pd.Timedelta(days=1)).apply(lambda x: np.nan if pd.isnull(x) else x.days)
+        #dd.loc[np.isnan(tmp), label] = np.nan
+
+    print("DD dataframe min values\n", dd.min())
     return dd
 
 
