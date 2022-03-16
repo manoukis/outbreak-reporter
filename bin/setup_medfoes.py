@@ -255,7 +255,43 @@ def Main(argv):
     # with open(os.path.join(medfoes_dir, "temps_list"),'w') as fh:
     #     print('\n'.join([os.path.join('temps',x) for x in out_fns]), file=fh)
 
-        #     ## output sge run file
+
+    ## output local (single machine) run file
+    local_runfile_pat = """#!/bin/bash
+
+BASEDIR="$PWD"
+TFILES=({TFILES})
+
+JAR="$BASEDIR/../../bin/MedFoesP-0.6.2.jar"
+CFGFILE="$BASEDIR/mfp.cfg"
+JAVA='java'
+NICE_LVL=9
+
+for TFILE in ${{TFILES[@]}}; do
+
+tmp="${{TFILE##*_}}"
+datestamp="${{tmp%.csv}}"
+OUTDIR="runs/$datestamp"
+
+echo '#####' Running $TFILE out=$OUTDIR
+rm -rf "$OUTDIR"
+mkdir -p "$OUTDIR"
+nice -n $NICE_LVL \
+$JAVA -jar "$JAR" -f "$CFGFILE" -nR {NUM_RUNS_PER_SET} -T "$TFILE" -o "$OUTDIR" 2>&1 > "$OUTDIR/mfp.log"
+tar --remove-files -C "$OUTDIR" -cjf "$OUTDIR/Runs.tar.bz2" Runs
+
+done
+"""
+    with open(os.path.join(medfoes_dir, "run_mfp_local.sh"),'w') as fh:
+        print(local_runfile_pat.format(
+            MEDFOES_DIR=medfoes_dir,
+            NUM_RUNSETS=len(out_fns),
+            NUM_RUNS_PER_SET=medfoes_runs_per_date,
+            TFILES='\n'.join(['"'+os.path.join("${BASEDIR}",'temps',x)+'"' for x in all_out_fns])),
+            file=fh)
+    os.chmod(os.path.join(medfoes_dir, "run_mfp_local.sh"), 0o774)
+
+    ## output sge run file
     sge_runfile_pat = """#!/bin/bash
 #$-N med-foes-p_longrun
 #$-S /bin/bash
@@ -275,11 +311,11 @@ BASEDIR="$PWD"
 TFILES=({TFILES})
 
 TFILE=${{TFILES[$((${{SGE_TASK_ID}}-1))]}}
-tmp="${{TFILE##*/temps/temps_}}"
+tmp="${{TFILE##*_}}"
 datestamp="${{tmp%.csv}}"
 OUTDIR="runs/$datestamp"
 
-JAR="$BASEDIR/MedFoesP-0.6.2.jar"
+JAR="$BASEDIR/../../bin/MedFoesP-0.6.2.jar"
 CFGFILE="$BASEDIR/mfp.cfg"
 JAVA='/home/travc/jdk/jdk1.8.0_171/bin/java'
 NICE_LVL=9
@@ -319,11 +355,11 @@ tar --remove-files -C "$OUTDIR" -cjf "$OUTDIR/Runs.tar.bz2" Runs
     current_runfile_pat = """#!/bin/bash
 BASEDIR="$PWD"
 TFILE="{CURRENT_TFILE}"
-tmp="${{TFILE##*/temps/temps_}}"
+tmp="${{TFILE##*_}}"
 datestamp="${{tmp%.csv}}"
 OUTDIR="runs/$datestamp"
 
-JAR="$BASEDIR/MedFoesP-0.6.2.jar"
+JAR="$BASEDIR/../../bin/MedFoesP-0.6.2.jar"
 CFGFILE="$BASEDIR/mfp.cfg"
 JAVA='/home/travc/jdk/jdk1.8.0_131/bin/java'
 NICE_LVL=9
