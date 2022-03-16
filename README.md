@@ -23,7 +23,7 @@ Other latex installtions will probably work fine if they provide pdflatex
 
 
 ## Current workflow:
-`conda activate outbreak-reporter`
+`conda activate outbreak-reporter`  
 `cp -r skel <short_name>`  
 `cd <short_name>`  
 `mkdir official`  
