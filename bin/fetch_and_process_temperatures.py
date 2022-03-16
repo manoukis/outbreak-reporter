@@ -353,7 +353,7 @@ def fetch_and_process_temperatures(station_callsign,
     outfn = "{}_AT_cleaned".format(station_callsign)
     print("Saving cleaned temp data to:",outfn)
     t.to_hdf(os.path.join(basedir, outfn+'.h5'), 'table', mode='w',
-              data_colums=True, complevel=5, complib='bzip2',
+              data_columns=True, complevel=5, complib='bzip2',
               dropna=False)
 
     # plot temperatures

@@ -161,7 +161,7 @@ def Main(argv):
 
     LOCATION = args.location
     BASEDIR = args.basedir
-    datestr = '{}-'+'{:02d}-{:02d}'.format(Fss[0].month, Fss[0].day)
+    datestr = '{}-'+'{:02d}-{:02d} 00:00:00 {}'.format(Fss[0].month, Fss[0].day, args.local_time_offset)
     year_range = np.arange(START_YEAR, END_YEAR+1)
     GEN_DD = args.DDc_per_generation
 
@@ -222,7 +222,7 @@ def Main(argv):
         else:
             ax = fig.add_subplot(3,1,Fnum, sharex=ax0)
 
-        ax.hist(fall[~np.isnan(fall)], label='previous years', normed=True)
+        ax.hist(fall[~np.isnan(fall)], label='previous years', density=True)
 
         if len(Fss) > Fnum and not pd.isnull(Fss[Fnum]):
             ax.axvline(x=(Fss[Fnum]-Fss[0]).days, color='c', label='official lifecyle projections')
@@ -331,7 +331,7 @@ def Main(argv):
                 ('GenDDf', "{:.4f}".format(args.DDc_per_generation*9/5)),
                 ('LargeGapSize', args.potentially_problematic_gap_size),
                 ('MEDFOESVersion', re.search(r'MedFoesP-(.*).jar',
-                                             glob.glob(os.path.join(MEDFOES_DIR,'MedFoesP*.jar'))[0]).group(1)),
+                                             glob.glob(os.path.join('..','bin','MedFoesP*.jar'))[0]).group(1)),
                 ('MFPnR', args.MFP_nR),
         ):
             print(r"\newcommand{\Var"+name+r"}{"+val+r"\xspace}", file=fh)

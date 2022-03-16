@@ -42,7 +42,13 @@ def load_temperature_csv(fn, local_time_offset=None):
         tmp = local_time_offset.split(':')
         tmp = int(tmp[0])*3600+int(tmp[1])*60
         sitetz = dateutil.tz.tzoffset(local_time_offset, tmp)
-        t.index = pd.to_datetime(t.index).tz_localize('UTC').tz_convert(sitetz)
+        #t.index = pd.to_datetime(t.index).tz_localize('UTC').tz_convert(sitetz) # @TCC this fails if csv contains datetimes with TZ
+        t.index = pd.to_datetime(t.index)
+        try:
+            t.index = t.index.tz_localize('UTC')
+        except TypeError:
+            pass
+        t.index = t.index.tz_convert(sitetz)
     return t
 
 
@@ -95,7 +101,7 @@ def compute_BMDD_Fs(tmin, tmax, base_temp, dd_gen):
         tmp[tmp>=len(tmp)] = np.nan
         #dd[label+'_idx'] = tmp
         # convert those indexes into end times
-        e = pd.Series(index=dd.index)#, dtype='datetime64[ns]')
+        e = pd.Series(index=dd.index, dtype='float64')#, dtype='datetime64[ns]')
 
         #e[~np.isnan(tmp)] = dd.index[tmp[~np.isnan(tmp)].astype(int)] # @TCC previous code
         e.loc[~np.isnan(tmp)] = dd.index[tmp[~np.isnan(tmp)].astype(int)]
